@@ -24,14 +24,17 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.io.File
 import android.Manifest
+import androidx.fragment.app.FragmentActivity
+import androidx.navigation.fragment.NavHostFragment
 import java.util.Locale
 
 
-class MainActivity : AppCompatActivity() {
-    var audioPlayer:AudioPlayer= AudioPlayer()
-    lateinit var elevenLabs: ElevenLabs
+class MainActivity : FragmentActivity() {
+    //  var audioPlayer:AudioPlayer= AudioPlayer()
+    //  lateinit var elevenLabs: ElevenLabs
     val voiceViewModel: VoiceViewModel by viewModels()
-    val speechRecognizer:SpeechRecognizer=ListenUpApp.getAppInstance().speechRecognizer
+
+    //  val speechRecognizer:SpeechRecognizer=ListenUpApp.getAppInstance().speechRecognizer
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
@@ -42,34 +45,44 @@ class MainActivity : AppCompatActivity() {
             insets
         }
         askAudioPermission()
-        lifecycleScope.launch {
-            voiceViewModel.generateVoice("Wassup bitch!!!","21m00Tcm4TlvDq8ikWAM")
-            voiceViewModel.audioData.collect(){state->
-                audioPlayer.playAudio(state!!)
-            }
-        }
-        lifecycleScope.launch {
-            delay(1000)
-            val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
-                putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
-                putExtra(RecognizerIntent.EXTRA_LANGUAGE, Locale.getDefault())
-            }
-            speechRecognizer.startListening(intent)
-            Toast.makeText(ListenUpApp.getAppInstance(),"Started",Toast.LENGTH_SHORT).show()
-            delay(8000)
-            Toast.makeText(ListenUpApp.getAppInstance(),"Stopped",Toast.LENGTH_SHORT).show()
-            speechRecognizer.stopListening()
-        }
+        val navHostFragment = supportFragmentManager
+            .findFragmentById(R.id.nav_host_fragment) as NavHostFragment
+        val navController = navHostFragment.navController
+        /* lifecycleScope.launch {
+             voiceViewModel.generateVoice("Wassup bitch!!!","21m00Tcm4TlvDq8ikWAM")
+             voiceViewModel.audioData.collect(){state->
+                 audioPlayer.playAudio(state!!)
+             }
+         }
+
+         */
+        /* lifecycleScope.launch {
+             delay(1000)
+             val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
+                 putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
+                 putExtra(RecognizerIntent.EXTRA_LANGUAGE, Locale.getDefault())
+             }
+             speechRecognizer.startListening(intent)
+             Toast.makeText(ListenUpApp.getAppInstance(),"Started",Toast.LENGTH_SHORT).show()
+             delay(8000)
+             Toast.makeText(ListenUpApp.getAppInstance(),"Stopped",Toast.LENGTH_SHORT).show()
+             speechRecognizer.stopListening()
+         }
+
+         */
 
 
     }
-    fun askAudioPermission(){
+
+    fun askAudioPermission() {
         val RECORD_AUDIO_REQUEST_CODE = 101
 
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO)
-            != PackageManager.PERMISSION_GRANTED) {
+            != PackageManager.PERMISSION_GRANTED
+        ) {
 
-            ActivityCompat.requestPermissions(this,
+            ActivityCompat.requestPermissions(
+                this,
                 arrayOf(Manifest.permission.RECORD_AUDIO),
                 RECORD_AUDIO_REQUEST_CODE
             )
