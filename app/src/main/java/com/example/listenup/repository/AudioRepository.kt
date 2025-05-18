@@ -51,20 +51,30 @@ class AudioRepository {
     val convertedAudioDurationMillis: LiveData<Long>
         get()= _convertedAudioDurationMillis
     //<------------------------------------------------------------------------->
-
+    //<---Live data for Media runner current state long and formatted time--->
+    val _convertedAudioCurrentStateMillis = MutableLiveData(0L)
+    val convertedAudioCurrentPlayStateMillis: LiveData<Long>
+        get() = _convertedAudioCurrentStateMillis
+    val _convertedAudioCurrentStateFormattedTime = MutableLiveData("00:00:00")
+    val convertedAudioCurrentStateFormattedTime:LiveData<String>
+        get() = _convertedAudioCurrentStateFormattedTime
+    fun updateConvertedAudioCurrentStateFormattedTime(millis:Long){
+        _convertedAudioCurrentStateMillis.value=millis
+        _convertedAudioCurrentStateFormattedTime.value=TimeConverter.getFormattedTimeFromMillis(millis)
+    }
+    //<----------------------------------------------------------------------->
     //<---handler to increment media player time when player runs--->
     val playProgressHandler = Handler(Looper.getMainLooper())
 
     val translatedAudioPlayProgressRunnable = object : Runnable {
         override fun run() {
             playProgressHandler.postDelayed(this, 1000)
-            _convertedAudioCurrentStateMillis.value= (convertedAudioCurrentPlayStateMillis.value)?.plus(1000)
-            _convertedAudioCurrentStateFormattedTime.value = TimeConverter.getFormattedTimeFromMillis(_convertedAudioCurrentStateMillis.value!!)
-            if(_convertedAudioCurrentStateMillis.value==convertedAudioDurationMillis.value?.plus(1000)){
+            val newMillis= (convertedAudioCurrentPlayStateMillis.value)?.plus(1000)
+            updateConvertedAudioCurrentStateFormattedTime(newMillis!!)
+            if(newMillis==convertedAudioDurationMillis.value?.plus(1000)){
                 playProgressHandler.postDelayed(this, 1000)
                 stopMediaPlayerProgressRunnable()
-                _convertedAudioCurrentStateMillis.value=0
-                _convertedAudioCurrentStateFormattedTime.value="00:00:00"
+                updateConvertedAudioCurrentStateFormattedTime(0)
                 _isAudioPlaying.value=false
             }
 
@@ -79,14 +89,6 @@ class AudioRepository {
         playProgressHandler.removeCallbacks(translatedAudioPlayProgressRunnable)
     }
     //<--------------------------------------------------------------->
-    //<---Live data for Media runner current state long and formatted time--->
-    val _convertedAudioCurrentStateMillis = MutableLiveData(0L)
-    val convertedAudioCurrentPlayStateMillis: LiveData<Long>
-        get() = _convertedAudioCurrentStateMillis
-    val _convertedAudioCurrentStateFormattedTime = MutableLiveData("00:00:00")
-    val convertedAudioCurrentStateFormattedTime:LiveData<String>
-        get() = _convertedAudioCurrentStateFormattedTime
-    //<----------------------------------------------------------------------->
     fun setupSpeechRecognizer() {
         speechRecognizer = SpeechRecognizer.createSpeechRecognizer(ListenUpApp.getAppInstance())
         speechRecognizer.setRecognitionListener(object : RecognitionListener {
@@ -227,8 +229,7 @@ class AudioRepository {
         audioPlayer.resumeAudio()
     }
     fun replayTranslatedAudio(){
-        _convertedAudioCurrentStateMillis.value=0
-        _convertedAudioCurrentStateFormattedTime.value="00:00:00"
+        updateConvertedAudioCurrentStateFormattedTime(0)
         stopMediaPlayerProgressRunnable()
         startMediaPlayerProgressRunnable()
         _isAudioPlaying.value=true

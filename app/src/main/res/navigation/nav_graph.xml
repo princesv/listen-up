@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/nav_graph"
+    app:startDestination="@+id/audioToTextFragment">
+
+    <fragment
+        android:id="@+id/audioToTextFragment"
+        android:name="com.example.listenup.ui.AudioToTextFragment"
+        android:label="AudioToTextFragment"
+        tools:layout="@layout/fragment_audio_to_text">
+        <action
+            android:id="@+id/action_audioToTextFragment_to_translationFragment"
+            app:destination="@id/translationFragment" />
+    </fragment>
+    <fragment
+        android:id="@+id/translationFragment"
+        android:name="com.example.listenup.ui.TranslationFragment"
+        android:label="fragment_translation"
+        tools:layout="@layout/fragment_translation" />
+</navigation>

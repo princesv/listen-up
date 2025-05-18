@@ -19,6 +19,8 @@ class VoiceViewModel : ViewModel() {
     val isAudioPlaying=audioRepository.isAudioPlaying
     val convertedAudioDuration=audioRepository.convertedAudioDurationFormattedTime
     val convertedAudioCurrentState=audioRepository.convertedAudioCurrentStateFormattedTime
+    val _audioDurationMillis=audioRepository._convertedAudioDurationMillis
+    val _audioCurrentStateMillis=audioRepository._convertedAudioCurrentStateMillis
     fun startRecording(){
         audioRepository.startTimer()
         audioRepository.startAudioRecording()

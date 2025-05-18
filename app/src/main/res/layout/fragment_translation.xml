@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <data>
+        <variable
+            name="voiceVm"
+            type="com.example.listenup.viewModels.VoiceViewModel" />
+    </data>
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        tools:context=".ui.TranslationFragment">
+
+        <!-- TODO: Update blank fragment layout -->
+        <ImageButton
+            android:id="@+id/play_audio_toggle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentEnd="true"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            android:src="@drawable/play_icon"
+            android:layout_margin="32dp"
+            android:backgroundTint="@android:color/transparent"
+            android:onClick="@{()->voiceVm.audioPlayerClicked()}"/>
+        <ImageButton
+            android:id="@+id/replay_audio"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentEnd="true"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toEndOf="@id/play_audio_toggle"
+            android:src="@drawable/replay_icon"
+            android:layout_marginBottom="38dp"
+            android:backgroundTint="@android:color/transparent"
+            android:onClick="@{()->voiceVm.replayTranslatedAudio()}"/>
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            app:layout_constraintBottom_toTopOf="@id/play_audio_toggle"
+            android:padding="16dp">
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:id="@+id/player_curr_state"
+                android:text="@{voiceVm.convertedAudioCurrentState}"
+                app:layout_constraintEnd_toStartOf="@id/audio_play_seek_bar"
+                app:layout_constraintBottom_toTopOf="@id/play_audio_toggle"/>
+        <SeekBar
+            android:id="@+id/audio_play_seek_bar"
+            android:layout_weight="1"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:max="100"/>
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:id="@+id/player_final_state"
+                android:text="@{voiceVm.convertedAudioDuration}"
+                app:layout_constraintEnd_toStartOf="@id/audio_play_seek_bar"
+                app:layout_constraintBottom_toTopOf="@id/play_audio_toggle"/>
+        </LinearLayout>
+
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+</layout>
