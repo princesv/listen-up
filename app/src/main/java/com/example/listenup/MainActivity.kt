@@ -25,11 +25,13 @@ import kotlinx.coroutines.launch
 import java.io.File
 import android.Manifest
 import android.content.Context
+import android.util.Log
 import android.widget.ProgressBar
 import android.widget.TextView
 import androidx.fragment.app.FragmentActivity
 import androidx.navigation.fragment.NavHostFragment
 import com.example.listenup.languageModel.OkHttpModelDownloader
+import com.example.listenup.languageModel.TranscriptResult
 import com.example.listenup.languageModel.VoskModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -39,6 +41,7 @@ import org.vosk.android.RecognitionListener
 import org.vosk.android.SpeechService
 import java.lang.Exception
 import java.util.Locale
+import kotlin.math.log
 
 
 class MainActivity : FragmentActivity(){
@@ -47,8 +50,7 @@ class MainActivity : FragmentActivity(){
     val voiceViewModel: VoiceViewModel by viewModels()
     lateinit var progressBar: ProgressBar
     lateinit var progressPercentage: TextView
-    lateinit var listenerModel: Model
-    private var speechService: SpeechService? = null
+    lateinit var speechService:SpeechService
 
     //  val speechRecognizer:SpeechRecognizer=ListenUpApp.getAppInstance().speechRecognizer
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -66,33 +68,11 @@ class MainActivity : FragmentActivity(){
         val navHostFragment = supportFragmentManager
             .findFragmentById(R.id.nav_host_fragment) as NavHostFragment
         val navController = navHostFragment.navController
-        /* lifecycleScope.launch {
-             voiceViewModel.generateVoice("Wassup bitch!!!","21m00Tcm4TlvDq8ikWAM")
-             voiceViewModel.audioData.collect(){state->
-                 audioPlayer.playAudio(state!!)
-             }
-         }
-
-         */
-        /* lifecycleScope.launch {
-             delay(1000)
-             val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
-                 putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
-                 putExtra(RecognizerIntent.EXTRA_LANGUAGE, Locale.getDefault())
-             }
-             speechRecognizer.startListening(intent)
-             Toast.makeText(ListenUpApp.getAppInstance(),"Started",Toast.LENGTH_SHORT).show()
-             delay(8000)
-             Toast.makeText(ListenUpApp.getAppInstance(),"Stopped",Toast.LENGTH_SHORT).show()
-             speechRecognizer.stopListening()
-         }
-
-         */
         downloadHindiLanguageModel()
         lifecycleScope.launch {
             val modelFile = File(filesDir, VoskModel.English.dirName)
             if (modelFile != null) {
-                initVosk(this@MainActivity, modelFile)
+                startListeningVoskVosk(this@MainActivity, modelFile)
             } else {
                 Toast.makeText(this@MainActivity, "Model load failed", Toast.LENGTH_LONG).show()
             }
@@ -107,7 +87,6 @@ class MainActivity : FragmentActivity(){
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO)
             != PackageManager.PERMISSION_GRANTED
         ) {
-
             ActivityCompat.requestPermissions(
                 this,
                 arrayOf(Manifest.permission.RECORD_AUDIO),
@@ -150,22 +129,44 @@ class MainActivity : FragmentActivity(){
         }
     }
 
-    fun initVosk(context: Context, modelPath: File) {
-        val model = Model(modelPath.absolutePath)
+    fun startListeningVoskVosk(context: Context, modelPath: File) {
+        val extractedPath= File(modelPath,"vosk-model-small-en-us-0.15")
+        val model = Model(extractedPath.absolutePath)
         val recognizer = Recognizer(model, 16000.0f)
-        val speechService = SpeechService(recognizer, 16000.0f)
+        speechService = SpeechService(recognizer, 16000.0f)
+        lifecycleScope.launch {
+            delay(10000)
+            stopListeningVosk()
+        }
 
         // Start recognition
         speechService.startListening(object : RecognitionListener {
-            override fun onPartialResult(hypothesis: String?) { /* update UI */
+            override fun onPartialResult(hypothesis: String?) {
+            /* update UI */
+                Log.d("VOSK", hypothesis?:"")
+                voiceViewModel.textTranslated.value=TranscriptResult.getPartialResult(hypothesis?:"{\n" +"\"partial\" : \"\"" +"}")
             }
 
             override fun onResult(hypothesis: String?) { /* final result */
+                Log.d("VOSK", hypothesis?:"")
+                voiceViewModel.finalTextResult+=" "+TranscriptResult.getFinalResult(hypothesis?:"{\n" +"\"text\" : \"\"" +"}")
+                Log.d("VOSK final result", voiceViewModel.finalTextResult)
+                voiceViewModel.textTranslated.value=voiceViewModel.finalTextResult
             }
 
             override fun onFinalResult(hypothesis: String?) {}
             override fun onError(exception: java.lang.Exception?) {}
             override fun onTimeout() {}
         })
+    }
+    fun stopListeningVosk(){
+        lifecycleScope.launch {
+            speechService.stop()
+            delay(500)
+            voiceViewModel.finalTextResult+=" "+voiceViewModel.textTranslated.value
+            Log.d("VOSK final result", voiceViewModel.finalTextResult)
+            voiceViewModel.textTranslated.value=voiceViewModel.finalTextResult
+        }
+
     }
 }
