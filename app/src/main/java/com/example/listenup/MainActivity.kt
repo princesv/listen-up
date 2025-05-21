@@ -24,21 +24,39 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.io.File
 import android.Manifest
+import android.content.Context
+import android.widget.ProgressBar
+import android.widget.TextView
 import androidx.fragment.app.FragmentActivity
 import androidx.navigation.fragment.NavHostFragment
+import com.example.listenup.languageModel.OkHttpModelDownloader
+import com.example.listenup.languageModel.VoskModel
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import org.vosk.Model
+import org.vosk.Recognizer
+import org.vosk.android.RecognitionListener
+import org.vosk.android.SpeechService
+import java.lang.Exception
 import java.util.Locale
 
 
-class MainActivity : FragmentActivity() {
+class MainActivity : FragmentActivity(){
     //  var audioPlayer:AudioPlayer= AudioPlayer()
     //  lateinit var elevenLabs: ElevenLabs
     val voiceViewModel: VoiceViewModel by viewModels()
+    lateinit var progressBar: ProgressBar
+    lateinit var progressPercentage: TextView
+    lateinit var listenerModel: Model
+    private var speechService: SpeechService? = null
 
     //  val speechRecognizer:SpeechRecognizer=ListenUpApp.getAppInstance().speechRecognizer
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContentView(R.layout.activity_main)
+        progressBar = findViewById(R.id.languageDownloaderProgress)
+        progressPercentage = findViewById(R.id.progressPercentage)
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main)) { v, insets ->
             val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
@@ -70,6 +88,15 @@ class MainActivity : FragmentActivity() {
          }
 
          */
+        downloadHindiLanguageModel()
+        lifecycleScope.launch {
+            val modelFile = File(filesDir, VoskModel.English.dirName)
+            if (modelFile != null) {
+                initVosk(this@MainActivity, modelFile)
+            } else {
+                Toast.makeText(this@MainActivity, "Model load failed", Toast.LENGTH_LONG).show()
+            }
+        }
 
 
     }
@@ -90,4 +117,55 @@ class MainActivity : FragmentActivity() {
 
     }
 
+    fun downloadHindiLanguageModel() {
+        val model = VoskModel.English
+
+        if (OkHttpModelDownloader.isModelDownloaded(this, model)) {
+            //  initRecognizer(model)
+           // initializeSpeechService(model.dirName)
+            val a=2
+        } else {
+            OkHttpModelDownloader.downloadModel(
+                context = this,
+                model = model,
+                onProgress = { percent ->
+                    runOnUiThread {
+                        progressBar.progress = percent
+                        progressPercentage.text = "$percent%"
+                    }
+                },
+                onComplete = {
+                    runOnUiThread {
+                        Toast.makeText(this, "Download complete", Toast.LENGTH_SHORT).show()
+                        //   initRecognizer(model)
+                       // initializeSpeechService(model.dirName)
+                    }
+                },
+                onError = { e ->
+                    runOnUiThread {
+                        Toast.makeText(this, "Error: ${e.message}", Toast.LENGTH_LONG).show()
+                    }
+                }
+            )
+        }
+    }
+
+    fun initVosk(context: Context, modelPath: File) {
+        val model = Model(modelPath.absolutePath)
+        val recognizer = Recognizer(model, 16000.0f)
+        val speechService = SpeechService(recognizer, 16000.0f)
+
+        // Start recognition
+        speechService.startListening(object : RecognitionListener {
+            override fun onPartialResult(hypothesis: String?) { /* update UI */
+            }
+
+            override fun onResult(hypothesis: String?) { /* final result */
+            }
+
+            override fun onFinalResult(hypothesis: String?) {}
+            override fun onError(exception: java.lang.Exception?) {}
+            override fun onTimeout() {}
+        })
+    }
 }
