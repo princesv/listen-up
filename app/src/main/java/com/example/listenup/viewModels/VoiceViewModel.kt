@@ -6,6 +6,7 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.listenup.languageModel.VoskModel
 import com.example.listenup.repository.AudioRepository
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -13,7 +14,7 @@ import kotlinx.coroutines.launch
 class VoiceViewModel : ViewModel() {
     private val audioRepository=AudioRepository()
     val audioData: StateFlow<ByteArray?> = audioRepository._audioData
-    val textTranslated= audioRepository._textTranslated
+    val _textTranslated= audioRepository._textTranslated
     val recordDuration=audioRepository.recordDuration
     val isRunning=audioRepository.isRunning
     val isAudioPlaying=audioRepository.isAudioPlaying
@@ -22,13 +23,18 @@ class VoiceViewModel : ViewModel() {
     val _audioDurationMillis=audioRepository._convertedAudioDurationMillis
     val _audioCurrentStateMillis=audioRepository._convertedAudioCurrentStateMillis
     var finalTextResult=audioRepository.finalTextResult
+    var selectedLanguageModel=MutableLiveData<VoskModel>(VoskModel.Default)
     fun startRecording(){
         audioRepository.startTimer()
-        audioRepository.startAudioRecording()
+        if(selectedLanguageModel.value ==VoskModel.Default){
+            audioRepository.startAudioRecording()
+        }
     }
     fun stopRecording(){
         audioRepository.stopTimer()
-        audioRepository.stopAudioRecording()
+        if(selectedLanguageModel.value ==VoskModel.Default){
+            audioRepository.stopAudioRecording()
+        }
     }
     fun recorderClicked(){
         if(isRunning.value!!){
@@ -39,7 +45,7 @@ class VoiceViewModel : ViewModel() {
     }
     fun processText(){
         viewModelScope.launch {
-            audioRepository.generateVoiceFromText(textTranslated.value!!,"21m00Tcm4TlvDq8ikWAM")
+            audioRepository.generateVoiceFromText(_textTranslated.value!!,"21m00Tcm4TlvDq8ikWAM")
         }
     }
     fun audioPlayerClicked(){

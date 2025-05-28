@@ -48,17 +48,14 @@ class MainActivity : FragmentActivity(){
     //  var audioPlayer:AudioPlayer= AudioPlayer()
     //  lateinit var elevenLabs: ElevenLabs
     val voiceViewModel: VoiceViewModel by viewModels()
-    lateinit var progressBar: ProgressBar
-    lateinit var progressPercentage: TextView
     lateinit var speechService:SpeechService
+    var firstFinalVostListeningResult = false
 
     //  val speechRecognizer:SpeechRecognizer=ListenUpApp.getAppInstance().speechRecognizer
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContentView(R.layout.activity_main)
-        progressBar = findViewById(R.id.languageDownloaderProgress)
-        progressPercentage = findViewById(R.id.progressPercentage)
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main)) { v, insets ->
             val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
@@ -68,17 +65,7 @@ class MainActivity : FragmentActivity(){
         val navHostFragment = supportFragmentManager
             .findFragmentById(R.id.nav_host_fragment) as NavHostFragment
         val navController = navHostFragment.navController
-        downloadHindiLanguageModel()
-        lifecycleScope.launch {
-            val modelFile = File(filesDir, VoskModel.English.dirName)
-            if (modelFile != null) {
-                startListeningVoskVosk(this@MainActivity, modelFile)
-            } else {
-                Toast.makeText(this@MainActivity, "Model load failed", Toast.LENGTH_LONG).show()
-            }
-        }
-
-
+        setUpRecordButtonToListenVosk()
     }
 
     fun askAudioPermission() {
@@ -96,62 +83,49 @@ class MainActivity : FragmentActivity(){
 
     }
 
-    fun downloadHindiLanguageModel() {
-        val model = VoskModel.English
+    fun setUpRecordButtonToListenVosk(){
+        voiceViewModel.isRunning.observe(this,{
+            if(it){
+                if(voiceViewModel.selectedLanguageModel.value != VoskModel.Default)
+                    startListeningVosk()
+            }else{
+                if(voiceViewModel.selectedLanguageModel.value != VoskModel.Default)
+                    stopListeningVosk()
+            }
+        })
+    }
 
-        if (OkHttpModelDownloader.isModelDownloaded(this, model)) {
-            //  initRecognizer(model)
-           // initializeSpeechService(model.dirName)
-            val a=2
-        } else {
-            OkHttpModelDownloader.downloadModel(
-                context = this,
-                model = model,
-                onProgress = { percent ->
-                    runOnUiThread {
-                        progressBar.progress = percent
-                        progressPercentage.text = "$percent%"
-                    }
-                },
-                onComplete = {
-                    runOnUiThread {
-                        Toast.makeText(this, "Download complete", Toast.LENGTH_SHORT).show()
-                        //   initRecognizer(model)
-                       // initializeSpeechService(model.dirName)
-                    }
-                },
-                onError = { e ->
-                    runOnUiThread {
-                        Toast.makeText(this, "Error: ${e.message}", Toast.LENGTH_LONG).show()
-                    }
-                }
-            )
+    fun startListeningVosk(){
+        voiceViewModel.finalTextResult=""
+        voiceViewModel._textTranslated.value=""
+        lifecycleScope.launch {
+            val modelFile = File(filesDir, VoskModel.Hindi.dirName)
+            if (modelFile != null) {
+                setupVoskSpeechService(modelFile,VoskModel.Hindi)
+            } else {
+                Toast.makeText(this@MainActivity, "Model load failed", Toast.LENGTH_LONG).show()
+            }
         }
     }
 
-    fun startListeningVoskVosk(context: Context, modelPath: File) {
-        val extractedPath= File(modelPath,"vosk-model-small-en-us-0.15")
-        val model = Model(extractedPath.absolutePath)
-        val recognizer = Recognizer(model, 16000.0f)
+    fun setupVoskSpeechService(modelPath: File,model:VoskModel) {
+        val extractedPath= File(modelPath,model.modelFolderName)
+        val modelFile = Model(extractedPath.absolutePath)
+        val recognizer = Recognizer(modelFile, 16000.0f)
         speechService = SpeechService(recognizer, 16000.0f)
-        lifecycleScope.launch {
-            delay(10000)
-            stopListeningVosk()
-        }
-
-        // Start recognition
         speechService.startListening(object : RecognitionListener {
             override fun onPartialResult(hypothesis: String?) {
             /* update UI */
                 Log.d("VOSK", hypothesis?:"")
-                voiceViewModel.textTranslated.value=TranscriptResult.getPartialResult(hypothesis?:"{\n" +"\"partial\" : \"\"" +"}")
+                voiceViewModel._textTranslated.value=TranscriptResult.getPartialResult(hypothesis?:"{\n" +"\"partial\" : \"\"" +"}")
             }
 
             override fun onResult(hypothesis: String?) { /* final result */
                 Log.d("VOSK", hypothesis?:"")
                 voiceViewModel.finalTextResult+=" "+TranscriptResult.getFinalResult(hypothesis?:"{\n" +"\"text\" : \"\"" +"}")
                 Log.d("VOSK final result", voiceViewModel.finalTextResult)
-                voiceViewModel.textTranslated.value=voiceViewModel.finalTextResult
+                voiceViewModel._textTranslated.value=voiceViewModel.finalTextResult
+                firstFinalVostListeningResult = true
             }
 
             override fun onFinalResult(hypothesis: String?) {}
@@ -163,9 +137,11 @@ class MainActivity : FragmentActivity(){
         lifecycleScope.launch {
             speechService.stop()
             delay(500)
-            voiceViewModel.finalTextResult+=" "+voiceViewModel.textTranslated.value
-            Log.d("VOSK final result", voiceViewModel.finalTextResult)
-            voiceViewModel.textTranslated.value=voiceViewModel.finalTextResult
+            if(firstFinalVostListeningResult) {
+                voiceViewModel.finalTextResult += " " + voiceViewModel._textTranslated.value
+                Log.d("VOSK final result", voiceViewModel.finalTextResult)
+                voiceViewModel._textTranslated.value = voiceViewModel.finalTextResult
+            }
         }
 
     }

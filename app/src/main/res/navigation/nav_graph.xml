@@ -13,10 +13,17 @@
         <action
             android:id="@+id/action_audioToTextFragment_to_translationFragment"
             app:destination="@id/translationFragment" />
+        <action
+            android:id="@+id/action_audioToTextFragment_to_chooseLanguageFragment"
+            app:destination="@id/chooseLanguageFragment" />
     </fragment>
     <fragment
         android:id="@+id/translationFragment"
         android:name="com.example.listenup.ui.TranslationFragment"
         android:label="fragment_translation"
         tools:layout="@layout/fragment_translation" />
+    <fragment
+        android:id="@+id/chooseLanguageFragment"
+        android:name="com.example.listenup.ui.ChooseLanguageFragment"
+        android:label="ChooseLanguageFragment" />
 </navigation>

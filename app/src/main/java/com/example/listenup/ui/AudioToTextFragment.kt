@@ -7,11 +7,13 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
+import android.widget.TextView
 import androidx.navigation.fragment.findNavController
 import com.example.listenup.ListenUpApp
 import com.example.listenup.MainActivity
 import com.example.listenup.R
 import com.example.listenup.databinding.FragmentAudioToTextBinding
+import com.example.listenup.languageModel.VoskModel
 import com.example.listenup.viewModels.VoiceViewModel
 
 
@@ -44,6 +46,8 @@ class AudioToTextFragment : Fragment() {
         })
 
         setupTranslateButton(view)
+        setUpChooselanguageButton(view)
+        setUpLanguageText(view)
     }
     fun setupTranslateButton(view: View){
         val button = view.findViewById<Button>(R.id.translate_button)
@@ -51,6 +55,18 @@ class AudioToTextFragment : Fragment() {
             findNavController().navigate(R.id.action_audioToTextFragment_to_translationFragment)
             voiceVm.processText()
         }
+    }
+    fun setUpChooselanguageButton(view: View){
+        val button = view.findViewById<Button>(R.id.choose_language_button)
+        button.setOnClickListener {
+            findNavController().navigate(R.id.action_audioToTextFragment_to_chooseLanguageFragment)
+        }
+    }
+    fun setUpLanguageText(view: View){
+        val tv=view.findViewById<TextView>(R.id.chosen_language_tv)
+        voiceVm.selectedLanguageModel.observe(requireActivity(),{
+            tv.text = it.modelName
+        })
     }
     override fun onDestroyView() {
         super.onDestroyView()
