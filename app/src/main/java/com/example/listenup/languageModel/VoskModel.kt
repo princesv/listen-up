@@ -33,5 +33,46 @@ sealed class VoskModel(
         modelName = "Spanish"
     )
 
+    object Chinese : VoskModel(
+        url = "https://alphacephei.com/vosk/models/vosk-model-small-cn-0.22.zip",
+        dirName = "model-cn",
+        modelFolderName = "vosk-model-small-cn-0.22",
+        modelName = "Chinese"
+    )
+
+    object Arabic : VoskModel(
+        url = "https://alphacephei.com/vosk/models/vosk-model-ar-mgb2-0.4.zip",
+        dirName = "model-ar",
+        modelFolderName = "vosk-model-ar-mgb2-0.4",
+        modelName = "Arabic"
+    )
+
+    object French : VoskModel(
+        url = "https://alphacephei.com/vosk/models/vosk-model-small-fr-0.22.zip",
+        dirName = "model-fr",
+        modelFolderName = "vosk-model-small-fr-0.22",
+        modelName = "French"
+    )
+
+    object Portuguese : VoskModel(
+        url = "https://alphacephei.com/vosk/models/vosk-model-small-pt-0.3.zip",
+        dirName = "model-pt",
+        modelFolderName = "vosk-model-small-pt-0.3",
+        modelName = "Portuguese"
+    )
+
+    object Russian : VoskModel(
+        url = "https://alphacephei.com/vosk/models/vosk-model-small-ru-0.22.zip",
+        dirName = "model-ru",
+        modelFolderName = "vosk-model-small-ru-0.22",
+        modelName = "Russian"
+    )
     // Add more models as needed
+
+    object Japanese : VoskModel(
+        url = "https://alphacephei.com/vosk/models/vosk-model-small-ja-0.22.zip",
+        dirName = "model-ja",
+        modelFolderName = "vosk-model-small-ja-0.22",
+        modelName = "Japanese"
+    )
 }

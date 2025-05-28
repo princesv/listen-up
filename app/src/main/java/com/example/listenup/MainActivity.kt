@@ -98,10 +98,11 @@ class MainActivity : FragmentActivity(){
     fun startListeningVosk(){
         voiceViewModel.finalTextResult=""
         voiceViewModel._textTranslated.value=""
+        val model = voiceViewModel.selectedLanguageModel.value
         lifecycleScope.launch {
-            val modelFile = File(filesDir, VoskModel.Hindi.dirName)
+            val modelFile = File(filesDir, model?.dirName ?: VoskModel.Default.dirName)
             if (modelFile != null) {
-                setupVoskSpeechService(modelFile,VoskModel.Hindi)
+                setupVoskSpeechService(modelFile,model!!)
             } else {
                 Toast.makeText(this@MainActivity, "Model load failed", Toast.LENGTH_LONG).show()
             }

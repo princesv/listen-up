@@ -41,7 +41,7 @@ class ChooseLanguageFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
         optionsContainer = view.findViewById(R.id.optionsContainer)
 
-        val options = listOf(VoskModel.Default, VoskModel.English, VoskModel.Hindi, VoskModel.Spanish)
+        val options = listOf(VoskModel.Default, VoskModel.English, VoskModel.Hindi, VoskModel.Spanish, VoskModel.Arabic, VoskModel.Chinese, VoskModel.French, VoskModel.Japanese, VoskModel.Portuguese, VoskModel.Russian)
 
         options.forEachIndexed { index, model ->
             val itemView = LayoutInflater.from(requireContext())
