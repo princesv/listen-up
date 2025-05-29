@@ -9,11 +9,15 @@ import android.view.ViewGroup
 import android.view.animation.LinearInterpolator
 import android.widget.Button
 import android.widget.SeekBar
+import android.widget.Toast
 import com.example.listenup.MainActivity
 import com.example.listenup.R
+import com.example.listenup.common.TimeConverter
 import com.example.listenup.databinding.FragmentAudioToTextBinding
 import com.example.listenup.databinding.FragmentTranslationBinding
+import com.example.listenup.helper.AudioPlaybackSpeed
 import com.example.listenup.viewModels.VoiceViewModel
+import kotlin.math.roundToLong
 
 class TranslationFragment : Fragment() {
     lateinit var voiceVm: VoiceViewModel
@@ -35,6 +39,8 @@ class TranslationFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
         setUpPlayPosButton()
         setUpSeekbar()
+        setUpPlaybackSpeedRadioGroup()
+        setupUpdateAudioDurationOnSpeedChange()
     }
     fun setUpPlayPosButton(){
         voiceVm.isAudioPlaying.observe(requireActivity(),{
@@ -69,6 +75,26 @@ class TranslationFragment : Fragment() {
             }
         }
         animator.start()
+    }
+    fun setUpPlaybackSpeedRadioGroup(){
+        binding.playbackSpeedRadioGroup.setOnCheckedChangeListener { _, checkedId ->
+            when (checkedId) {
+                R.id.radio_slow -> {
+                    voiceVm.playBackSpeedLd.value = AudioPlaybackSpeed.Slow
+                }
+                R.id.radio_medium -> {
+                    voiceVm.playBackSpeedLd.value = AudioPlaybackSpeed.Medium
+                }
+                R.id.radio_fast -> {
+                    voiceVm.playBackSpeedLd.value = AudioPlaybackSpeed.Fast
+                }
+            }
+        }
+    }
+    fun setupUpdateAudioDurationOnSpeedChange(){
+        voiceVm.playBackSpeedLd.observe(requireActivity(),{
+            voiceVm.convertedAudioDuration.value = TimeConverter.getFormattedTimeFromMillis( (voiceVm.convertedAudioDurationMillis.value!! / voiceVm.playBackSpeedLd.value!!.speed).roundToLong())
+        })
     }
     override fun onDestroyView() {
         super.onDestroyView()

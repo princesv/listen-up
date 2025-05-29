@@ -14,11 +14,13 @@ import androidx.lifecycle.MutableLiveData
 import com.example.listenup.ListenUpApp
 import com.example.listenup.common.TimeConverter
 import com.example.listenup.entities.VoiceRequest
+import com.example.listenup.helper.AudioPlaybackSpeed
 import com.example.listenup.helper.AudioPlayer
 import com.example.listenup.helper.ElevenLabs
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import java.util.Locale
+import kotlin.math.roundToLong
 
 class AudioRepository {
     val _audioData = MutableStateFlow<ByteArray?>(null)
@@ -38,6 +40,9 @@ class AudioRepository {
     val _isAudioPlaying = MutableLiveData(false)
     val isAudioPlaying:LiveData<Boolean>
         get() = _isAudioPlaying
+    val audioPlaybackSpeedLd =MutableLiveData<AudioPlaybackSpeed>(AudioPlaybackSpeed.Medium)
+
+
     init {
         setupSpeechRecognizer()
         elevenLabs= ElevenLabs()
@@ -71,7 +76,9 @@ class AudioRepository {
             playProgressHandler.postDelayed(this, 1000)
             val newMillis= (convertedAudioCurrentPlayStateMillis.value)?.plus(1000)
             updateConvertedAudioCurrentStateFormattedTime(newMillis!!)
-            if(newMillis==convertedAudioDurationMillis.value?.plus(1000)){
+            val originalDuration = convertedAudioDurationMillis.value!!
+            val factor = audioPlaybackSpeedLd.value!!.speed
+            if(newMillis==(originalDuration/factor).roundToLong().plus(1000)){
                 playProgressHandler.postDelayed(this, 1000)
                 stopMediaPlayerProgressRunnable()
                 updateConvertedAudioCurrentStateFormattedTime(0)
@@ -211,9 +218,11 @@ class AudioRepository {
             if (response.isSuccessful) {
                 _audioData.value = response.body()?.bytes()  // Raw audio bytes
                 Toast.makeText(ListenUpApp.getAppInstance(),"Translated successfully!!",Toast.LENGTH_SHORT).show()
-                audioPlayer.setupMediaPlayer(_audioData.value!!){
-                    _convertedAudioDurationFormattedTime.value = it
-                    _convertedAudioDurationMillis.value = TimeConverter.getMillisFromFormattedTime(it)
+                audioPlayer.setupMediaPlayer(_audioData.value!!,audioPlaybackSpeedLd.value!!.speed){
+                    _convertedAudioDurationMillis.value = it
+                    _convertedAudioDurationFormattedTime.value = TimeConverter.getFormattedTimeFromMillis(
+                        (_convertedAudioDurationMillis.value!! *audioPlaybackSpeedLd.value!!.speed).roundToLong()
+                    )
                 }
             } else {
                 Log.e("API_ERROR", "Failed: ${response.errorBody()?.string()}")
@@ -226,14 +235,14 @@ class AudioRepository {
     fun resumeTranslatedAudio() {
         startMediaPlayerProgressRunnable()
         _isAudioPlaying.value=true
-        audioPlayer.resumeAudio()
+        audioPlayer.resumeAudio(_audioData.value!!,audioPlaybackSpeedLd.value!!.speed)
     }
     fun replayTranslatedAudio(){
         updateConvertedAudioCurrentStateFormattedTime(0)
         stopMediaPlayerProgressRunnable()
         startMediaPlayerProgressRunnable()
         _isAudioPlaying.value=true
-        audioPlayer.replayAudio(_audioData.value!!)
+        audioPlayer.replayAudio(_audioData.value!!,audioPlaybackSpeedLd.value!!.speed)
     }
 
     fun pausePlayingTranslatedAudio() {
@@ -241,6 +250,8 @@ class AudioRepository {
         _isAudioPlaying.value=false
         audioPlayer.pauseAudio()
     }
+
+    //<---Used while recording audio--------------------------->
     private val timerRunnable: Runnable = object : Runnable {
         override fun run() {
             val elapsed = System.currentTimeMillis() - startTime
@@ -265,4 +276,5 @@ class AudioRepository {
         _isRunning.value = false
         handler.removeCallbacks(timerRunnable)
     }
+    //<------------------------------------------------------------>
 }

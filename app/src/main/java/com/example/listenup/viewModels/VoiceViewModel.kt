@@ -18,12 +18,14 @@ class VoiceViewModel : ViewModel() {
     val recordDuration=audioRepository.recordDuration
     val isRunning=audioRepository.isRunning
     val isAudioPlaying=audioRepository.isAudioPlaying
-    val convertedAudioDuration=audioRepository.convertedAudioDurationFormattedTime
-    val convertedAudioCurrentState=audioRepository.convertedAudioCurrentStateFormattedTime
+    val convertedAudioDuration=audioRepository._convertedAudioDurationFormattedTime
+    val convertedAudioDurationMillis=audioRepository._convertedAudioDurationMillis
+    val convertedAudioCurrentState=audioRepository._convertedAudioCurrentStateFormattedTime
     val _audioDurationMillis=audioRepository._convertedAudioDurationMillis
     val _audioCurrentStateMillis=audioRepository._convertedAudioCurrentStateMillis
     var finalTextResult=audioRepository.finalTextResult
     var selectedLanguageModel=MutableLiveData<VoskModel>(VoskModel.Default)
+    val playBackSpeedLd=audioRepository.audioPlaybackSpeedLd
     fun startRecording(){
         audioRepository.startTimer()
         if(selectedLanguageModel.value ==VoskModel.Default){
